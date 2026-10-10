@@ -1,0 +1,17 @@
+CREATE TYPE "OpportunityApplicationState" AS ENUM ('DRAFT', 'SUBMITTED', 'WITHDRAWN', 'OUTCOME_RECEIVED');
+ALTER TABLE "student_opportunities" RENAME TO "opportunities";
+ALTER TABLE "opportunities" DROP CONSTRAINT "student_opportunities_studentId_fkey";
+DROP INDEX "student_opportunities_studentId_deadline_idx";
+ALTER TABLE "opportunities" DROP COLUMN "studentId", ADD COLUMN "description" TEXT, ADD COLUMN "category" VARCHAR(80), ADD COLUMN "source" VARCHAR(240), ADD COLUMN "location" VARCHAR(240), ADD COLUMN "isOpen" BOOLEAN NOT NULL DEFAULT true, ADD COLUMN "verifiedAt" TIMESTAMP(3), ADD COLUMN "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+CREATE INDEX "opportunities_deadline_isOpen_idx" ON "opportunities"("deadline", "isOpen");
+CREATE TABLE "saved_opportunities" ("studentId" UUID NOT NULL, "opportunityId" UUID NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "saved_opportunities_pkey" PRIMARY KEY ("studentId", "opportunityId"));
+CREATE TABLE "opportunity_applications" ("id" UUID NOT NULL, "studentId" UUID NOT NULL, "opportunityId" UUID NOT NULL, "state" "OpportunityApplicationState" NOT NULL DEFAULT 'DRAFT', "note" VARCHAR(1000), "submittedAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "opportunity_applications_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "opportunity_applications_studentId_opportunityId_key" ON "opportunity_applications"("studentId", "opportunityId");
+CREATE INDEX "opportunity_applications_studentId_state_updatedAt_idx" ON "opportunity_applications"("studentId", "state", "updatedAt");
+CREATE INDEX "saved_opportunities_opportunityId_idx" ON "saved_opportunities"("opportunityId");
+ALTER TABLE "saved_opportunities" ADD CONSTRAINT "saved_opportunities_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "saved_opportunities" ADD CONSTRAINT "saved_opportunities_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES "opportunities"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "opportunity_applications" ADD CONSTRAINT "opportunity_applications_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "opportunity_applications" ADD CONSTRAINT "opportunity_applications_opportunityId_fkey" FOREIGN KEY ("opportunityId") REFERENCES "opportunities"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+INSERT INTO "permissions" ("key", "description") VALUES ('student_opportunities:read', 'Discover opportunities'), ('student_opportunities:create', 'Save opportunities and create applications') ON CONFLICT ("key") DO NOTHING;
+INSERT INTO "role_permissions" ("roleCode", "permissionKey") VALUES ('STUDENT', 'student_opportunities:read'), ('STUDENT', 'student_opportunities:create') ON CONFLICT ("roleCode", "permissionKey") DO NOTHING;

@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+design
+docs/HELIXED_MASTER_SPEC.md
+package-lock.json
+playwright-report
+test-results
+exports

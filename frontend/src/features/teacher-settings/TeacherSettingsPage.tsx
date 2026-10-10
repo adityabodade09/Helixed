@@ -1,0 +1,120 @@
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useAuth } from '../auth/useAuth';
+import { DashboardCard } from '../student-dashboard/StudentDashboardPage';
+import { TeacherShell } from '../teacher-dashboard/TeacherShell';
+import { teacherSettingsApi } from './teacherSettings.api';
+
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+
+export function TeacherSettingsPage() {
+  const { accessToken, user, logoutAll } = useAuth();
+  const query = useQuery({
+    queryKey: ['teacher-settings'],
+    queryFn: () => teacherSettingsApi.get(accessToken!),
+    enabled: !!accessToken,
+  });
+  const logout = useMutation({ mutationFn: logoutAll });
+  const teacherName = query.data?.account.displayName ?? user?.displayName ?? 'Teacher';
+
+  return (
+    <TeacherShell teacherName={teacherName}>
+      <div className="mx-auto max-w-6xl p-4 md:p-7">
+        <header className="rounded-2xl border border-blue-50 bg-white p-6 shadow-sm">
+          <p className="text-sm font-semibold text-blue-600">Teacher › Settings</p>
+          <h1 className="mt-1 text-3xl font-black text-helixed-navy md:text-4xl">Settings</h1>
+          <p className="mt-2 text-slate-600">
+            Review your own account, security status, and active sessions.
+          </p>
+        </header>
+
+        {query.isLoading ? <p className="mt-6">Loading account settings…</p> : null}
+        {query.isError ? (
+          <p className="mt-6 rounded-2xl bg-rose-50 p-5 text-rose-700">
+            Settings are unavailable for this account.
+          </p>
+        ) : null}
+
+        {query.data ? (
+          <div className="mt-6 grid gap-5 lg:grid-cols-2">
+            <DashboardCard title="Your account">
+              <dl className="space-y-3 text-sm">
+                <SettingRow label="Name" value={query.data.account.displayName ?? 'Not provided'} />
+                <SettingRow label="Account" value={query.data.account.loginIdentifier} />
+                <SettingRow label="Status" value={query.data.account.accountState} />
+              </dl>
+            </DashboardCard>
+
+            <DashboardCard title="Account boundary">
+              <p className="text-sm leading-6 text-slate-600">
+                This page contains only your account information. Student, Parent, and other Teacher
+                account security remains private and separate.
+              </p>
+            </DashboardCard>
+
+            <DashboardCard title="Active sessions" className="lg:col-span-2">
+              {query.data.sessions.length ? (
+                <div className="divide-y divide-slate-100">
+                  {query.data.sessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center"
+                    >
+                      <div>
+                        <p className="font-semibold text-helixed-navy">
+                          {session.current ? 'Current session' : 'Active session'}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          Last active {formatDate(session.lastSeenAt)}
+                        </p>
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Expires {formatDate(session.expiresAt)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">No active sessions are available.</p>
+              )}
+            </DashboardCard>
+
+            <DashboardCard title="Security" className="lg:col-span-2">
+              <p className="text-sm text-slate-600">
+                Sign out every session connected to your Teacher account. Other users' sessions are
+                not affected.
+              </p>
+              <button
+                type="button"
+                disabled={logout.isPending}
+                onClick={() => logout.mutate()}
+                className="mt-4 rounded-xl bg-rose-600 px-4 py-2 font-semibold text-white disabled:opacity-60"
+              >
+                {logout.isPending ? 'Signing out…' : 'Sign out of all sessions'}
+              </button>
+              {logout.isError ? (
+                <p className="mt-3 text-sm text-rose-700">Unable to sign out all sessions.</p>
+              ) : null}
+              <p className="mt-4 text-xs text-slate-500">
+                Password, email, MFA, recovery, preferences, and account deletion changes are not
+                available in this approved settings milestone.
+              </p>
+            </DashboardCard>
+          </div>
+        ) : null}
+      </div>
+    </TeacherShell>
+  );
+}
+
+function SettingRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-5 border-b border-slate-100 pb-3 last:border-0">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="font-semibold text-helixed-navy">{value}</dd>
+    </div>
+  );
+}

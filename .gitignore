@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.seed-dist/
+coverage/
+.env
+.env.*
+!.env.example
+!.env.production.example
+exports/
+*.log
+.DS_Store
+Thumbs.db
+.vite/
+playwright-report/
+test-results/
+backend/prisma/dev.db*

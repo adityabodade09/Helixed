@@ -1,0 +1,14 @@
+process.env.NODE_ENV = 'test';
+process.env.PORT = '3001';
+process.env.DATABASE_URL =
+  'postgresql://postgres:postgres@localhost:5433/helixed_test?schema=public';
+process.env.CORS_ORIGIN = 'http://localhost:5173';
+process.env.ACCESS_TOKEN_SECRET = 'test-secret-that-is-at-least-32-characters-long';
+process.env.ACCESS_TOKEN_TTL = '15m';
+process.env.ACCESS_TOKEN_ISSUER = 'helixed-api-test';
+process.env.ACCESS_TOKEN_AUDIENCE = 'helixed-web-test';
+process.env.REFRESH_TOKEN_TTL_DAYS = '30';
+process.env.REFRESH_TOKEN_COOKIE_NAME = 'helixed_refresh';
+process.env.AUTH_RATE_LIMIT_WINDOW_MS = '60000';
+process.env.AUTH_RATE_LIMIT_MAX = '100';
+process.env.LOG_LEVEL = 'silent';
